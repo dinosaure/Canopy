@@ -85,11 +85,7 @@ module Main  (C: CONSOLE) (RES: Resolver_lwt.S) (CON: Conduit_mirage.S) (S:Cohtt
         let headers = Cohttp.Header.init_with "Content-Type" "application/atom+xml; charset=UTF-8" in
         S.respond_string ~status:`OK ~headers ~body ()
       | [] ->
-        let content = KeyHashtbl.fold (fun _ value acc -> value :: acc) content_hashtbl []
-          |> List.sort Canopy_content.compare
-          |> List.map Canopy_content.to_tyxml_listing_entry
-          |> Canopy_templates.listing in
-        respond_html ~status:`OK ~title:config.blog_name ~content
+        dispatcher config.index_page
 
       | uri::[] when uri = config.push_hook_path ->
 	 Store.pull console >>= fun _ ->

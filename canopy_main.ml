@@ -35,8 +35,8 @@ module Main  (C: CONSOLE) (RES: Resolver_lwt.S) (CON: Conduit_mirage.S) (S:Cohtt
     let respond_update = function
       | [] -> S.respond_string ~status:`OK ~body:"" ()
       | errors ->
-	 let body = List.fold_left (fun a b -> a ^ "\n" ^ b) "" errors in
-	 S.respond_string ~status:`Bad_request ~body () in
+        let body = List.fold_left (fun a b -> a ^ "\n" ^ b) "" errors in
+        S.respond_string ~status:`Bad_request ~body () in
 
     let update_atom, get_atom =
       let cache = ref None in
@@ -85,7 +85,11 @@ module Main  (C: CONSOLE) (RES: Resolver_lwt.S) (CON: Conduit_mirage.S) (S:Cohtt
         let headers = Cohttp.Header.init_with "Content-Type" "application/atom+xml; charset=UTF-8" in
         S.respond_string ~status:`OK ~headers ~body ()
       | [] ->
-        dispatcher config.index_page
+        let content = KeyHashtbl.fold (fun _ value acc -> value :: acc) content_hashtbl []
+          |> List.sort Canopy_content.compare
+          |> List.map Canopy_content.to_tyxml_listing_entry
+          |> Canopy_templates.listing in
+        respond_html ~status:`OK ~title:config.blog_name ~content
 
       | uri::[] when uri = config.push_hook_path ->
 	 Store.pull console >>= fun _ ->
@@ -121,7 +125,7 @@ module Main  (C: CONSOLE) (RES: Resolver_lwt.S) (CON: Conduit_mirage.S) (S:Cohtt
                 respond_html ~status:`OK ~title:config.blog_name ~content
             | Some article ->
               let title, content = Canopy_content.to_tyxml article in
-              respond_html ~status:`OK ~title ~content
+              respond_html ~status:`OK ~title:config.blog_name ~content
         end
 
     in

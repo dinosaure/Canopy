@@ -20,18 +20,19 @@ let empty =
 let taglist tags =
   let format_tag tag =
     let taglink = Printf.sprintf "/tags/%s" in
-    a ~a:[taglink tag |> a_href; a_class ["tag"]] [pcdata tag] in
+    a ~a:[taglink tag |> a_href; ] [pcdata tag] in
   match tags with
   | [] -> empty
   | tags ->
-     let tags = List.map format_tag tags in
-     div ~a:[a_class ["tags"]] ([pcdata "Classified under: "] ++ tags)
+    let tags = List.map format_tag tags in
+    div ~a:[a_class ["tags"]] tags
 
 let links keys =
-  let paths = List.map (function
-			 | x::_ -> x
-			 | _ -> assert false
-		       ) keys |> List.sort_uniq (Pervasives.compare) in
+  let paths =
+    List.map (function
+              | x :: _ -> x
+              | _ -> assert false) keys
+    |> List.sort_uniq (Pervasives.compare) in
   let format_link link =
     li [ a ~a:[a_href ("/" ^ link)] [span [pcdata link]]] in
  List.map format_link paths
@@ -40,54 +41,30 @@ let script_mathjax =
   [script ~a:[a_src "https://travis-ci.org/Engil/Canopy"] (pcdata "")]
 
 let main ~config ~content ~title ~keys =
-  let links = links keys in
   let mathjax = if config.mathjax then script_mathjax else [] in
   let page =
     html
       (head
-	 (Html5.M.title (pcdata title))
-	 ([
-	   meta ~a:[a_charset "UTF-8"] ();
-	   link ~rel:[`Stylesheet] ~href:"/static/bower/bootstrap/dist/css/bootstrap.min.css" ();
-	   link ~rel:[`Stylesheet] ~href:"/static/css/style.css" ();
-	   script ~a:[a_src "/static/bower/jquery/dist/jquery.min.js"] (pcdata "");
-	   script ~a:[a_src "/static/bower/bootstrap/dist/js/bootstrap.min.js"] (pcdata "");
-     link ~rel:[`Alternate] ~href:"/atom" ~a:[a_title title; a_mime_type "application/atom+xml"] ();
-	 ] ++ mathjax)
-      )
+        (Html5.M.title (pcdata title))
+        ([ meta ~a:[a_charset "UTF-8"] ()
+         ; link ~rel:[`Stylesheet] ~href:"/static/css/style.css" ()
+         ; link ~rel:[`Alternate] ~href:"/atom" ~a:[a_title title; a_mime_type "application/atom+xml"] ()
+         ] ++ mathjax))
       (body
-	 [
-	   nav ~a:[a_class ["navbar navbar-default navbar-fixed-top"]] [
-		 div ~a:[a_class ["container"]] [
-		       div ~a:[a_class ["navbar-header"]] [
-			     button ~a:[a_class ["navbar-toggle collapsed"];
-					a_user_data "toggle" "collapse";
-					a_user_data "target" ".navbar-collapse"
-				       ] [
-				      span ~a:[a_class ["icon-bar"]][];
-				      span ~a:[a_class ["icon-bar"]][];
-				      span ~a:[a_class ["icon-bar"]][]
-				    ];
-			     a ~a:[a_class ["navbar-brand"]; a_href ("/" ^ config.index_page)][pcdata config.blog_name]
-			   ];
-		       div ~a:[a_class ["collapse navbar-collapse collapse"]] [
-			     ul ~a:[a_class ["nav navbar-nav navbar-right"]] links
-			   ]
-		     ]
-	       ];
-	   main [
-	       div ~a:[a_class ["flex-container"]] content
-	     ]
-	 ]
-      )
+      [ div ~a:[a_class ["banner"]]
+        [ h1 [ a ~a:[a_href "/"] [pcdata title]
+             ; span ~a:[a_class ["dashed"]]
+               [ pcdata "["
+               ; a ~a:[a_href "/atom"]
+                 [ img ~src:"/static/feed.png" ~alt:"[Atom]"~a:[a_class ["feedicon"]] ()]
+               ; pcdata " abridged edition]" ]]]
+      ; hr ()
+      ; div ~a:[a_id "main"] content
+      ; hr () ])
   in
   StringHtml.print page
 
-let listing entries =
-  [div ~a:[a_class ["flex-container"]] [
-	 div ~a:[a_class ["list-group listing"]] entries
-       ]
-  ]
+let listing entries = [ ul ~a:[a_class ["index"]] entries ]
 
 let error msg =
   [div ~a:[a_class ["alert alert-danger"]] [pcdata msg]]

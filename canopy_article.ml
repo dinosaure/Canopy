@@ -25,31 +25,30 @@ let of_string meta uri created updated content =
   | _ -> None
 
 let to_tyxml article =
-  let author = "Written by " ^ article.author in
-  let date = ptime_to_pretty_date article.updated in
-  let updated = "Last updated: " ^ date in
   let tags = Canopy_templates.taglist article.tags in
-  [div ~a:[a_class ["post"]] [
-	 h2 [pcdata article.title];
-	 span ~a:[a_class ["author"]] [pcdata author];
-	 br ();
-	 tags;
-	 span ~a:[a_class ["date"]] [pcdata updated];
-	 br ();
-	 Html5.M.article [Unsafe.data article.content]
-       ]]
+  let str = Printf.sprintf in
+  let ((y, m, d), ((hh, mm, ss), _)) = Ptime.to_date_time article.updated in
+  let edito = match article.abstract with
+    | Some t -> [ div ~a:[a_class ["Edito"]] [pcdata t]]
+    | None -> []
+  in
+  let content = [ Unsafe.data article.content ] in
+  [ div ~a:[a_id "main"]
+    ([ h2 [pcdata article.title]
+     ; div ~a:[a_class ["pupdated"]]
+       ([ tags ]
+        ++ [pcdata (str "(%s @ %d-%02d-%02d %02d:%02d:%02d)" article.author y m d hh mm ss)]) ]
+     ++ edito
+     ++ content) ]
 
 let to_tyxml_listing_entry article =
-  let author = "Written by " ^ article.author in
-  let abstract = match article.abstract with
-    | None -> []
-    | Some abstract -> [p ~a:[a_class ["list-group-item-text abstract"]] [pcdata abstract]] in
-  let content = [
-      h4 ~a:[a_class ["list-group-item-heading"]] [pcdata article.title];
-      span ~a:[a_class ["author"]] [pcdata author];
-      br ();
-    ] in
-  a ~a:[a_href article.uri; a_class ["list-group-item"]] (content ++ abstract)
+  let date =
+    let d, m, y = Ptime.to_date article.updated in
+    Printf.sprintf "%d-%02d-%02d" d m y
+  in
+  li
+  [ span ~a:[a_class ["date"]] [pcdata date]
+  ; a ~a:[a_href article.uri] [pcdata article.title] ]
 
 let to_atom ({ title; author; abstract; uri; created; updated; tags; content; } as article) =
   let text x : Syndic.Atom.text_construct = Syndic.Atom.Text x in
@@ -63,10 +62,10 @@ let to_atom ({ title; author; abstract; uri; created; updated; tags; content; } 
       tags
   in
   let generate_id ?(root = "") { created; uri; _ } =
-    let d, m, y = Ptime.to_date created in
+    let y, m, d = Ptime.to_date created in
     let relatif = Uri.path @@ Uri.of_string uri in
     let ts = Ptime.Span.to_int_s @@ Ptime.to_span created in
-    Printf.sprintf "tag:%s,%d-%d-%d:%s/%a" root d m y relatif
+    Printf.sprintf "tag:%s,%d-%d-%d:%s/%a" root y m d relatif
       (fun () -> function Some a -> string_of_int a | None -> "") ts
     |> Uri.of_string
   in

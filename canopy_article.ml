@@ -74,6 +74,7 @@ let to_atom ({ title; author; abstract; uri; created; updated; tags; content; } 
     ~content:(Syndic.Atom.Html (None, content))
     ~authors:(Syndic.Atom.author author, [])
     ~title:(text title)
+    ~published:created
     ~updated
     ?summary
     ~categories

@@ -8,11 +8,17 @@ let deflate ?(level = 4) buff =
 
   Decompress.Deflate.bytes
     input_buffer output_buffer
-    (fun input_buffer ->
-     let n = min 0xFFFF (Cstruct.len buff - !pos) in
-     Cstruct.blit_to_bytes buff !pos input_buffer 0 n;
-     pos := !pos + n;
-     n)
+    (fun input_buffer -> function
+     | Some max ->
+       let n = min 0xFFFF (Cstruct.len buff - !pos) in
+       Cstruct.blit_to_bytes buff !pos input_buffer 0 n;
+       pos := !pos + n;
+       n
+     | None ->
+       let n = min 0xFFFF (Cstruct.len buff - !pos) in
+       Cstruct.blit_to_bytes buff !pos input_buffer 0 n;
+       pos := !pos + n;
+       n)
     (fun output_buffer len ->
      Buffer.add_subbytes res output_buffer 0 len;
      0xFFFF)

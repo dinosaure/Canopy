@@ -45,5 +45,5 @@ let inflate ?output_size orig =
      0xFFFF)
     (Decompress.Inflate.default (Decompress.Window.reset window))
   |> function
-     | Ok _ -> Mstruct.of_string @@ Buffer.contents res
-     | Error exn -> failwith "Inflate.inflate"
+     | Ok _ -> Some (Mstruct.of_string @@ Buffer.contents res)
+     | Error exn -> None

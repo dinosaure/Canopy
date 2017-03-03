@@ -27,7 +27,7 @@ let packages = [
   package "omd" ;
   package ~min:"4.0.0" "tyxml";
   package "ptime";
-  package ~min:"0.5.0" "decompress";
+  package ~min:"0.5" "decompress";
   package "irmin";
   package "irmin-mirage";
   package "mirage-http";
